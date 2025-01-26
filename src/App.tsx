@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
-import image1 from './assets/image/image1.jpg';
-import image2 from './assets/image/image2.jpg';
-
-import { Menu, X, Code, Globe, Layout, Github, Linkedin, Mail, Briefcase, MapPin, Calendar, Coffee } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import image1 from "./assets/image/image1.jpg";
+import image2 from "./assets/image/image2.jpg";
+import { Menu, X, Code, Globe, Layout, Github, Linkedin, Mail, Briefcase, MapPin, Calendar, Coffee, Smartphone } from 'lucide-react';
 
 function Logo() {
   return (
@@ -22,6 +21,31 @@ function Logo() {
 
 function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  // Handle scroll effect
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Handle click outside to close menu
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const nav = document.getElementById('mobile-menu');
+      const button = document.getElementById('menu-button');
+      if (isMenuOpen && nav && !nav.contains(event.target as Node) && !button?.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isMenuOpen]);
 
   const projects = [
     {
@@ -51,26 +75,46 @@ function App() {
   ];
 
   const stats = [
-    { icon: <Briefcase size={20} />, label: "Years Experience", value: "5+" },
-    { icon: <Coffee size={20} />, label: "Projects Completed", value: "50+" },
-    { icon: <Code size={20} />, label: "Technologies", value: "15+" },
-    { icon: <Globe size={20} />, label: "Countries Worked With", value: "10+" }
+    { icon: <Briefcase size={20} />, label: "Years Experience", value: "1+" },
+    { icon: <Coffee size={20} />, label: "Projects Completed", value: "2+" },
+    { icon: <Code size={20} />, label: "Technologies", value: "5+" },
+    { icon: <Smartphone size={20} />, label: "Responsive Designs", value: "100%" }
   ];
 
-  const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => (
-    <a
-      href={href}
-      className="relative text-gray-700 hover:text-gray-900 transition-colors duration-300 group py-2"
-    >
-      {children}
-      <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-indigo-600 transition-all duration-300 group-hover:w-full"></span>
-    </a>
-  );
+  const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => {
+    const [isActive, setIsActive] = useState(false);
+
+    useEffect(() => {
+      const handleScroll = () => {
+        const section = document.querySelector(href);
+        if (section) {
+          const rect = section.getBoundingClientRect();
+          setIsActive(rect.top <= 100 && rect.bottom >= 100);
+        }
+      };
+
+      window.addEventListener('scroll', handleScroll);
+      return () => window.removeEventListener('scroll', handleScroll);
+    }, [href]);
+
+    return (
+      <a
+        href={href}
+        className={`relative text-gray-700 hover:text-gray-900 transition-colors duration-300 group py-2 ${isActive ? 'text-indigo-600' : ''
+          }`}
+      >
+        {children}
+        <span className={`absolute bottom-0 left-0 h-0.5 bg-indigo-600 transition-all duration-300 ${isActive ? 'w-full' : 'w-0 group-hover:w-full'
+          }`}></span>
+      </a>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navigation */}
-      <nav className="bg-white shadow-sm fixed w-full z-10 transition-all duration-300">
+      <nav className={`fixed w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-white/80 backdrop-blur-md shadow-md' : 'bg-white shadow-sm'
+        }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
@@ -90,15 +134,20 @@ function App() {
             {/* Mobile menu button */}
             <div className="md:hidden flex items-center">
               <button
+                id="menu-button"
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="text-gray-700 hover:text-gray-900 transition-colors duration-300 p-2 rounded-md hover:bg-gray-100"
+                className={`text-gray-700 hover:text-gray-900 transition-all duration-300 p-2 rounded-md hover:bg-gray-100 ${isMenuOpen ? 'bg-gray-100' : ''
+                  }`}
                 aria-label="Toggle menu"
               >
-                {isMenuOpen ? (
-                  <X size={24} className="transform rotate-0 transition-transform duration-300" />
-                ) : (
-                  <Menu size={24} className="transform rotate-0 transition-transform duration-300" />
-                )}
+                <div className="relative w-6 h-6">
+                  <span className={`absolute left-0 top-1/2 w-6 h-0.5 bg-current transform transition-all duration-300 ${isMenuOpen ? 'rotate-45 translate-y-0' : '-translate-y-1'
+                    }`}></span>
+                  <span className={`absolute left-0 top-1/2 w-6 h-0.5 bg-current transform transition-opacity duration-300 ${isMenuOpen ? 'opacity-0' : 'opacity-100'
+                    }`}></span>
+                  <span className={`absolute left-0 top-1/2 w-6 h-0.5 bg-current transform transition-all duration-300 ${isMenuOpen ? '-rotate-45 translate-y-0' : 'translate-y-1'
+                    }`}></span>
+                </div>
               </button>
             </div>
           </div>
@@ -106,40 +155,23 @@ function App() {
 
         {/* Mobile Navigation */}
         <div
-          className={`md:hidden transition-all duration-300 ease-in-out transform ${isMenuOpen
+          id="mobile-menu"
+          className={`md:hidden fixed inset-x-0 transition-all duration-300 ease-in-out transform ${isMenuOpen
             ? 'opacity-100 translate-y-0'
-            : 'opacity-0 -translate-y-4 pointer-events-none'
+            : 'opacity-0 -translate-y-full pointer-events-none'
             }`}
         >
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white shadow-lg rounded-b-lg">
-            <a
-              href="#about"
-              className="block px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-all duration-300"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              About
-            </a>
-            <a
-              href="#projects"
-              className="block px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-all duration-300"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Projects
-            </a>
-            <a
-              href="#skills"
-              className="block px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-all duration-300"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Skills
-            </a>
-            <a
-              href="#contact"
-              className="block px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-all duration-300"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Contact
-            </a>
+          <div className="px-2 pt-2 pb-3 space-y-1 bg-white/80 backdrop-blur-md shadow-lg">
+            {['About', 'Projects', 'Skills', 'Contact'].map((item) => (
+              <a
+                key={item}
+                href={`#${item.toLowerCase()}`}
+                className="block px-4 py-3 text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all duration-300"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                {item}
+              </a>
+            ))}
           </div>
         </div>
       </nav>
@@ -175,8 +207,8 @@ function App() {
               <div className="relative overflow-hidden rounded-2xl shadow-xl transform transition-transform duration-500 group-hover:scale-105">
                 <img
                   src={image1}
-                  alt="kamal jaishi"
-                  className="w-full h-[500px] object-cover"
+                  alt="Kamal Jaishi"
+                  className="w-full h-[600px] object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </div>
@@ -196,7 +228,7 @@ function App() {
                 <img
                   src={image2}
                   alt="Kamal Jaishi"
-                  className="w-full h-[800px] object-cover"
+                  className="w-full h-[500px] object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </div>
@@ -211,7 +243,7 @@ function App() {
 
               <div className="space-y-4">
                 <p className="text-lg text-gray-600 leading-relaxed">
-                  Hello! I'm Kamal Jaishi, a passionate Full Stack Developer with 2+ years of experience in crafting digital experiences. I specialize in building exceptional websites, applications, and everything in between.
+                  Hello! I'm Kamal Jaishi, a passionate Full Stack Developer with 1+ years of experience in crafting digital experiences. I specialize in building exceptional websites, applications, and everything in between.
                 </p>
                 <p className="text-lg text-gray-600 leading-relaxed">
                   My journey in web development started with a curiosity for creating interactive experiences. Today, I work with cutting-edge technologies to build scalable, user-friendly solutions that solve real-world problems.
@@ -241,7 +273,7 @@ function App() {
 
               {/* Skills Tags */}
               <div className="flex flex-wrap gap-2">
-                {["JavaScript", "React", "Node.js", "TypeScript", "Python", "AWS"].map((skill, index) => (
+                {["JavaScript", "React", "Node.js", "TypeScript", "Python"].map((skill, index) => (
                   <span
                     key={index}
                     className="px-4 py-2 bg-indigo-50 text-indigo-600 rounded-full text-sm font-medium hover:bg-indigo-100 transition-colors duration-300"
@@ -318,13 +350,13 @@ function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-center mb-12">Get In Touch</h2>
           <div className="flex justify-center space-x-6">
-            <a href="https://github.com/jaishikamal" className="text-gray-700 hover:text-gray-900 transition-colors duration-300">
+            <a href="https://github.com" className="text-gray-700 hover:text-gray-900 transition-colors duration-300">
               <Github size={24} />
             </a>
             <a href="https://linkedin.com" className="text-gray-700 hover:text-gray-900 transition-colors duration-300">
               <Linkedin size={24} />
             </a>
-            <a href="mailto:jaishikamal07@gmail.com" className="text-gray-700 hover:text-gray-900 transition-colors duration-300">
+            <a href="mailto:contact@kamaljaishi.com" className="text-gray-700 hover:text-gray-900 transition-colors duration-300">
               <Mail size={24} />
             </a>
           </div>
